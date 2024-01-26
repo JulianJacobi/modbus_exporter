@@ -17,3 +17,7 @@
 modbus_exporter
 
 /vendor
+
+# Vim cache files
+*.swp
+*.swo
