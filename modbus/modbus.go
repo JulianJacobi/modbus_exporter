@@ -24,6 +24,7 @@ import (
 
 	"github.com/RichiH/modbus_exporter/config"
 	"github.com/goburrow/modbus"
+    "github.com/x448/float16"
 )
 
 // Exporter represents a Prometheus exporter converting modbus information
@@ -301,8 +302,8 @@ func parseModbusData(d config.MetricDef, rawData []byte) (float64, error) {
 			if err != nil {
 				return float64(0), err
 			}
-			data := binary.BigEndian.Float16(rawDataWithEndianness)
-			return scaleValue(d.Factor, float64(data)), nil
+			data := binary.BigEndian.Uint16(rawDataWithEndianness)
+			return scaleValue(d.Factor, float64(float16.Float16(data).Float32())), nil
 		}
 	case config.ModbusInt16:
 		{
