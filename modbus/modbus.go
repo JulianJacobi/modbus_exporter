@@ -298,7 +298,7 @@ func parseModbusData(d config.MetricDef, rawData []byte) (float64, error) {
 			if len(rawData) != 2 {
 				return float64(0), &InsufficientRegistersError{fmt.Sprintf("expected 2 bytes, got %v", len(rawData))}
 			}
-			rawDataWithEndianness, err := convertEndianness32b(d.Endianness, rawData)
+			rawDataWithEndianness, err := convertEndianness16b(d.Endianness, rawData)
 			if err != nil {
 				return float64(0), err
 			}
