@@ -35,6 +35,12 @@ Exporter-->Prometheus:temperature_a{module="VendorXY",sub_target="10"} 20 \ntemp
 
 ## Building
 
+Prerequisite packages:
+- make
+- go (called `golang` at some package managers)
+
+Run:
+
 ```bash
 make build
 ```
@@ -42,9 +48,10 @@ make build
 
 ## Getting Started
 
-The modbus exporter needs to be passed *target* (including port), *module* and *sub_module* as parameters
-by Prometheus, this can be done with relabelling (see
-[prometheus.yml](prometheus.yml)).
+The modbus exporter can be tested standalone, but should be added as a target in your Prometheus config.
+
+Prometheus needs the following labels parsed by the modbus exporter: *target* (including port), *module* and *sub_module* as parameters,
+this can be done with relabelling as shown in the example [prometheus.yml](prometheus.yml).
 
 Once Prometheus is properly configured, run the exporter via:
 
@@ -62,7 +69,7 @@ usage: modbus_exporter [<flags>]
 Flags:
   -h, --[no-]help                Show context-sensitive help (also try
                                  --help-long and --help-man).
-      --config.file="modbus.yml"  
+      --config.file=modbus.yml ...  
                                  Sets the configuration file.
       --[no-]web.systemd-socket  Use systemd socket activation listeners instead
                                  of port listeners (Linux only).
@@ -86,9 +93,54 @@ Visit http://localhost:9602/metrics to get the metrics of the exporter itself.
 
 ## Configuration File
 
-Check out [`modbus.yml`](/modbus.yml) for more details on the configuration file
+Check out [`modbus.yml`](modbus.yml) for more details on the configuration file
 format.
 
+The `--config.file` parameter can be used multiple times to load more than one file.
+It also supports [glob filename matching](https://pkg.go.dev/path/filepath#Glob), e.g. `modbus_*.yml`.
+
+## Systemd service
+
+You can create a systemd service if you want to run modbus exporter as a background service. Start by creating a modbus_exporter system account (example on Debian)
+
+```shell
+useradd -r modbus_exporter
+```
+
+Place the modbus_exporter binary at `/usr/local/bin/modbus_exporter`
+
+The following example systemd unit file can be saved to `/etc/systemd/system/modbus_exporter.service`:
+
+```systemd
+[Unit]
+Description=Modbus TCP Prometheus exporter
+Requires=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=modbus_exporter
+Group=nogroup
+ExecStart=/usr/local/bin/modbus_exporter --config.file='/etc/modbus_exporter.yml'
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then locate your Modbus exporter config file in `/etc/modbus_exporter.yml`, and run the following commands to make systemd aware of config changes and startup the modbus_exporter
+
+```shell
+systemctl daemon-reload
+systemctl start modbus_exporter
+```
+
+In order to start the service at system boot, run the following
+
+```shell
+systemctl enable modbus_exporter
+```
 
 ## TODO
 
